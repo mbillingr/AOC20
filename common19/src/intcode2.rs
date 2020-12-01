@@ -75,8 +75,7 @@ pub struct ComputerImpl<T: Computable, H: Hooks = ()> {
     next_input: VecDeque<T>,
 }
 
-impl ComputerImpl<i64, ()> {
-}
+impl ComputerImpl<i64, ()> {}
 
 impl<T: Computable, H: Hooks> ComputerImpl<T, H> {
     pub fn new(program: &[i64]) -> Self {

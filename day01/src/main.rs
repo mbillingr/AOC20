@@ -1,28 +1,34 @@
-use std::fs::File;
-use std::io::Read;
+use common::input::Input;
 
 fn main() {
-    let mut input = String::new();
-    File::open("data/day01-input.txt")
-        .unwrap()
-        .read_to_string(&mut input)
-        .unwrap();
+    let input = Input::from_file("data/day01-input.txt");
 
-    let entries = input
-        .lines()
-        .map(|l| l.parse::<i32>().unwrap())
-        .collect::<Vec<_>>();
+    let entries: Vec<_> = input.iter_numbers().collect();
 
     println!("Part 1: {}", part1(&entries));
+    println!("Part 2: {}", part2(&entries));
 }
 
-fn part1(entries: &[i32]) -> i32 {
+fn part1(entries: &[i64]) -> i64 {
     for first in entries.iter() {
         for second in entries.iter() {
             if first + second == 2020 {
-                return first * second
+                return first * second;
             }
         }
     }
     panic!("Part 1: No solution")
+}
+
+fn part2(entries: &[i64]) -> i64 {
+    for first in entries.iter() {
+        for second in entries.iter() {
+            for third in entries.iter() {
+                if first + second + third == 2020 {
+                    return first * second * third;
+                }
+            }
+        }
+    }
+    panic!("Part 2: No solution")
 }
