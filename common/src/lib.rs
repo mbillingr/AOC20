@@ -1,4 +1,5 @@
 pub mod input;
+pub use itertools;
 
 #[cfg(test)]
 mod tests {
