@@ -1,5 +1,6 @@
 pub mod input;
 pub use itertools;
+pub use regex;
 
 #[cfg(test)]
 mod tests {
