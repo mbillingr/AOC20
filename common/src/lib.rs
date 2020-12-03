@@ -1,7 +1,9 @@
 #[macro_use]
 mod ascii_enum;
 
+pub mod grid;
 pub mod input;
+
 pub use itertools;
 pub use regex;
 

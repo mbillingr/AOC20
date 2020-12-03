@@ -1,4 +1,5 @@
 use common::ascii_enum;
+use common::grid::Grid;
 use common::input::Input;
 
 ascii_enum! {
@@ -9,6 +10,7 @@ fn main() {
     let input = Input::from_file("data/day03-input.txt");
 
     let grid = Grid::from_input(input);
+    println!("{:?}", grid);
 
     let n_trees = count_trees(1, 3, &grid);
 
@@ -23,11 +25,11 @@ fn main() {
     println!("Part 2: {}", total);
 }
 
-fn count_trees(row_step: isize, col_step: isize, grid: &Grid) -> usize {
+fn count_trees(row_step: isize, col_step: isize, grid: &Grid<Cell>) -> usize {
     slope(0, 0, row_step, col_step)
-        .map(|(row, col)| (row as usize, col as usize))
+        .map(|(row, col)| (row as usize, (col % grid.width as isize) as usize))
         .take_while(|(row, _)| *row < grid.height)
-        .filter(|(row, col)| grid.get(*row, *col) == Cell::Tree)
+        .filter(|(row, col)| *grid.get(*row, *col) == Cell::Tree)
         .count()
 }
 
@@ -44,45 +46,4 @@ fn slope(
         col += col_step;
         (row, col)
     })
-}
-
-#[derive(Debug)]
-struct Grid {
-    field: Vec<Vec<Cell>>,
-    pub width: usize,
-    pub height: usize,
-}
-
-impl Grid {
-    fn from_input(input: Input) -> Self {
-        let field: Vec<Vec<_>> = input
-            .iter_lines()
-            .map(|line| line.chars().map(Cell::from_char).collect())
-            .collect();
-
-        let height = field.len();
-        let width = field[0].len();
-
-        Grid {
-            field,
-            width,
-            height,
-        }
-    }
-
-    fn get(&self, row: usize, col: usize) -> Cell {
-        self.field[row][col % self.width]
-    }
-}
-
-impl std::fmt::Display for Grid {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        for row in &self.field {
-            for cell in row {
-                write!(f, "{:?}", cell)?;
-            }
-            write!(f, "\n")?;
-        }
-        Ok(())
-    }
 }
