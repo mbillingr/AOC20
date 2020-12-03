@@ -1,3 +1,6 @@
+#[macro_use]
+mod ascii_enum;
+
 pub mod input;
 pub use itertools;
 pub use regex;
