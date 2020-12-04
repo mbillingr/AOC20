@@ -50,4 +50,8 @@ impl Input {
     pub fn iter_words(&self) -> impl Iterator<Item = &str> {
         self.data.split_whitespace()
     }
+
+    pub fn iter_blocks(&self) -> impl Iterator<Item = &str> {
+        self.data.split("\n\n")
+    }
 }

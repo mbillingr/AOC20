@@ -4,6 +4,7 @@ mod ascii_enum;
 pub mod grid;
 pub mod input;
 
+pub use hex;
 pub use itertools;
 pub use regex;
 
