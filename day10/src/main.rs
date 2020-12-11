@@ -18,11 +18,17 @@ fn main() {
 
     adapters.push(adapters.last().unwrap() + 3);
 
-    println!("Part 2 (correct): {}", ArrangementCounter::new().count(0, &adapters));
+    println!(
+        "Part 2 (correct): {}",
+        ArrangementCounter::new().count(0, &adapters)
+    );
 
     let mut adapters2 = vec![];
     adapters2.extend(adapters);
-    println!("Part 2 (wip): {}", ArrangementCounter::new().count2(&adapters2));
+    println!(
+        "Part 2 (wip): {}",
+        ArrangementCounter::new().count2(&adapters2)
+    );
 }
 
 struct ArrangementCounter {
@@ -61,28 +67,33 @@ impl ArrangementCounter {
             match adapters.last().unwrap() - adapters.first().unwrap() {
                 2 | 3 => return 2,
                 4 | 5 | 6 => return 1,
-                _ => panic!("invalid sequence {:?}", adapters)
+                _ => panic!("invalid sequence {:?}", adapters),
             }
             return 1;
         }
 
         if adapters.len() == 4 {
             let first = adapters.first().unwrap();
-            return match [adapters[0]-first, adapters[1]-first, adapters[2]-first, adapters[3]-first] {
+            return match [
+                adapters[0] - first,
+                adapters[1] - first,
+                adapters[2] - first,
+                adapters[3] - first,
+            ] {
                 [0, 1, 2, 3] => 4,
                 [0, 1, 2, 5] => 2,
                 [0, 1, 4, 5] => 1,
                 [0, 3, 4, 5] => 2,
                 [0, 3, 4, 7] => 1,
                 [0, 3, 6, 7] => 1,
-                _ => panic!("invalid sequence {:?}", adapters)
-            }
+                _ => panic!("invalid sequence {:?}", adapters),
+            };
         }
 
         let pivot = adapters.len() / 2;
-        let left = &adapters[..pivot+1];
+        let left = &adapters[..pivot + 1];
         let right = &adapters[pivot..];
-        let mid = &adapters[pivot-1..pivot+2];
+        let mid = &adapters[pivot - 1..pivot + 2];
 
         let count = self.count2(left) * self.count2(right) * self.count2(mid);
 
