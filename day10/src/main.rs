@@ -62,14 +62,13 @@ impl ArrangementCounter {
         count
     }
 
-    fn count2(&mut self, mut adapters: &[i64]) -> usize {
+    fn count2(&mut self, adapters: &[i64]) -> usize {
         if adapters.len() == 3 {
             match adapters.last().unwrap() - adapters.first().unwrap() {
                 2 | 3 => return 2,
                 4 | 5 | 6 => return 1,
                 _ => panic!("invalid sequence {:?}", adapters),
             }
-            return 1;
         }
 
         if adapters.len() == 4 {
