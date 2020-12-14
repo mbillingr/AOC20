@@ -1,3 +1,4 @@
+use common::bitops::{assign_nth_bit, get_nth_bit};
 use common::input::Input;
 use std::collections::HashMap;
 
@@ -8,7 +9,6 @@ fn main() {
         .iter_lines()
         .map(str::parse)
         .map(Result::unwrap)
-        .inspect(|x| println!("{:?}", x))
         .collect();
 
     let mut memory = HashMap::new();
@@ -146,22 +146,10 @@ impl Mask {
         let n_x = self.x_locs.len();
         (0..2u64.pow(n_x as u32)).map(move |i| {
             let mut addr = addr0;
-            for (a, &b) in self.x_locs.iter().enumerate() {
-                addr = set_nth_bit(addr, b, get_nth_bit(i, a as u64));
+            for (nth_x, &x_pos) in self.x_locs.iter().enumerate() {
+                addr = assign_nth_bit(addr, x_pos, get_nth_bit(i, nth_x as u64));
             }
             addr
         })
-    }
-}
-
-fn get_nth_bit(x: u64, n: u64) -> u64 {
-    (x >> n) & 1
-}
-
-fn set_nth_bit(x: u64, n: u64, val: u64) -> u64 {
-    match val {
-        0 => x & !(1 << n),
-        1 => x | (1 << n),
-        _ => panic!("invalid bit: {}", val),
     }
 }

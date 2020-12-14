@@ -1,6 +1,7 @@
 #[macro_use]
 mod ascii_enum;
 
+pub mod bitops;
 pub mod grid;
 pub mod input;
 
