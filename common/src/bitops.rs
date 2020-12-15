@@ -1,4 +1,3 @@
-
 pub fn get_nth_bit(x: u64, n: u64) -> bool {
     ((x >> n) & 1) == 1
 }
