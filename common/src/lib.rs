@@ -2,6 +2,7 @@
 mod ascii_enum;
 
 pub mod bitops;
+pub mod containers;
 pub mod grid;
 pub mod input;
 
