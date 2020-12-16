@@ -25,7 +25,7 @@ struct ElvenGame {
 
 impl ElvenGame {
     fn new(input: impl IntoIterator<Item = usize>) -> Self {
-        let mut last_spoken = VecMap::new();
+        let last_spoken = VecMap::new();
 
         let mut game = Self {
             turn_counter: 0,
