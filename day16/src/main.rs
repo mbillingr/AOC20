@@ -44,7 +44,7 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    remaining_tickets.push(ticket.clone());  // not necessary
+    remaining_tickets.push(ticket.clone()); // not necessary
 
     let mut am = ArrangementMatrix::new(loc_ranges.keys().copied().collect(), |field, pos| {
         is_valid(pos, field, &remaining_tickets, &loc_ranges)
@@ -91,7 +91,12 @@ impl Range {
     }
 }
 
-fn is_valid(field_position: usize, field_name: &str, tickets: &[Vec<usize>], ranges: &HashMap<&str, Range>) -> bool {
+fn is_valid(
+    field_position: usize,
+    field_name: &str,
+    tickets: &[Vec<usize>],
+    ranges: &HashMap<&str, Range>,
+) -> bool {
     let rng = &ranges[field_name];
 
     let all_valid = tickets
@@ -100,7 +105,6 @@ fn is_valid(field_position: usize, field_name: &str, tickets: &[Vec<usize>], ran
         .all(|value| rng.is_valid(value));
     all_valid
 }
-
 
 struct ArrangementMatrix<T> {
     data: Vec<Vec<bool>>,

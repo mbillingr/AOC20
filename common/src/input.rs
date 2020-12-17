@@ -54,4 +54,15 @@ impl Input {
     pub fn iter_blocks(&self) -> impl Iterator<Item = &str> {
         self.data.split("\n\n")
     }
+
+    pub fn iter_grid(&self) -> impl Iterator<Item = impl Iterator<Item = char> + '_> + '_ {
+        self.iter_lines().map(|line| line.chars())
+    }
+
+    pub fn enumerate_grid(&self) -> impl Iterator<Item = (usize, usize, char)> + '_ {
+        self.iter_grid()
+            .enumerate()
+            .map(|(y, line)| line.enumerate().map(move |(x, ch)| (x, y, ch)))
+            .flatten()
+    }
 }
