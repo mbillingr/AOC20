@@ -1,61 +1,52 @@
-use common::ascii_enum;
 use common::input::Input;
-use std::collections::{BTreeMap, HashMap, HashSet};
-
-ascii_enum!(Cell = Active('#') | Dormant('.'));
+use std::collections::HashSet;
+use std::hash::Hash;
 
 type Coord3d = (isize, isize, isize);
-type Grid3d = HashSet<Coord3d>;
-
 type Coord4d = (isize, isize, isize, isize);
-type Grid4d = HashSet<Coord4d>;
+type Grid<C> = HashSet<C>;
 
 fn main() {
     let input = Input::from_file("data/day17-input.txt");
-
-    let mut grid3d: Grid3d = input
-        .enumerate_grid()
-        .map(|(x, y, ch)| ((x as isize, y as isize, 0isize), Cell::from_char(ch)))
-        .filter(|&(_, cell)| cell == Cell::Active)
-        .map(|(coord, _)| coord)
-        .collect();
-
-    for _ in 0..6 {
-        grid3d = step_cycle3d(&grid3d);
-    }
-
-    println!("Part 1: {}", grid3d.len());
-
-    let mut grid4d: Grid4d = input
-        .enumerate_grid()
-        .map(|(x, y, ch)| {
-            (
-                (x as isize, y as isize, 0isize, 0isize),
-                Cell::from_char(ch),
-            )
-        })
-        .filter(|&(_, cell)| cell == Cell::Active)
-        .map(|(coord, _)| coord)
-        .collect();
-
-    for _ in 0..6 {
-        grid4d = step_cycle4d(&grid4d);
-    }
-
-    println!("Part 2: {}", grid4d.len());
+    println!("Part 1: {}", solve::<Coord3d>(&input));
+    println!("Part 2: {}", solve::<Coord4d>(&input));
 }
 
-fn step_cycle3d(grid: &Grid3d) -> Grid3d {
-    let mut cells_to_simulate: HashSet<_> =
-        grid.iter().copied().flat_map(cube_positions3d).collect();
+fn solve<C>(input: &Input) -> usize
+where
+    C: GridPos + Eq + Hash,
+{
+    let mut grid: Grid<C> = parse_input(&input);
+    for _ in 0..6 {
+        grid = step_cycle(&grid);
+    }
+    grid.len()
+}
 
-    let mut out = Grid3d::new();
+fn parse_input<C>(input: &Input) -> Grid<C>
+where
+    C: GridPos + Eq + Hash,
+{
+    input
+        .enumerate_grid()
+        .map(|(x, y, ch)| (C::init_2d(x as isize, y as isize), ch))
+        .filter(|&(_, cell)| cell == '#')
+        .map(|(coord, _)| coord)
+        .collect()
+}
+
+fn step_cycle<C>(grid: &Grid<C>) -> Grid<C>
+where
+    C: GridPos + Eq + Hash,
+{
+    let cells_to_simulate: HashSet<_> =
+        grid.iter().copied().flat_map(C::surrounding_cube).collect();
+
+    let mut out = Grid::new();
 
     for cell in cells_to_simulate {
         let cell_is_active = grid.contains(&cell);
-        let n_active_neighbors = neighbor_positions3d(cell)
-            .filter(|c| grid.contains(c))
-            .count();
+        let n_active_neighbors = cell.neighbors().filter(|c| grid.contains(c)).count();
 
         if cell_is_active {
             if n_active_neighbors == 2 || n_active_neighbors == 3 {
@@ -71,51 +62,40 @@ fn step_cycle3d(grid: &Grid3d) -> Grid3d {
     out
 }
 
-fn neighbor_positions3d(center: Coord3d) -> impl Iterator<Item = Coord3d> {
-    cube_positions3d(center).filter(move |&pos| pos != center)
+trait GridPos: 'static + Copy + PartialEq {
+    fn init_2d(x: isize, y: isize) -> Self;
+    fn surrounding_cube(self) -> Box<dyn Iterator<Item = Self>>;
+
+    fn neighbors(self) -> Box<dyn Iterator<Item = Self>> {
+        Box::new(Self::surrounding_cube(self).filter(move |&pos| pos != self))
+    }
 }
 
-fn cube_positions3d((x0, y0, z0): Coord3d) -> impl Iterator<Item = Coord3d> {
-    (-1..=1)
-        .flat_map(|x| (-1..=1).flat_map(move |y| (-1..=1).map(move |z| (x, y, z))))
-        .map(move |(x, y, z)| (x + x0, y + y0, z + z0))
-}
-
-fn step_cycle4d(grid: &Grid4d) -> Grid4d {
-    let mut cells_to_simulate: HashSet<_> =
-        grid.iter().copied().flat_map(cube_positions4d).collect();
-
-    let mut out = Grid4d::new();
-
-    for cell in cells_to_simulate {
-        let cell_is_active = grid.contains(&cell);
-        let n_active_neighbors = neighbor_positions4d(cell)
-            .filter(|c| grid.contains(c))
-            .count();
-
-        if cell_is_active {
-            if n_active_neighbors == 2 || n_active_neighbors == 3 {
-                out.insert(cell);
-            }
-        } else {
-            if n_active_neighbors == 3 {
-                out.insert(cell);
-            }
-        }
+impl GridPos for Coord3d {
+    fn init_2d(x: isize, y: isize) -> Self {
+        (x, y, 0)
     }
 
-    out
-}
-
-fn neighbor_positions4d(center: Coord4d) -> impl Iterator<Item = Coord4d> {
-    cube_positions4d(center).filter(move |&pos| pos != center)
-}
-
-fn cube_positions4d((x0, y0, z0, w0): Coord4d) -> impl Iterator<Item = Coord4d> {
-    (-1..=1)
-        .flat_map(|x| {
+    fn surrounding_cube(self) -> Box<dyn Iterator<Item = Self>> {
+        let (x0, y0, z0) = self;
+        Box::new(
             (-1..=1)
-                .flat_map(move |y| (-1..=1).flat_map(move |z| (-1..=1).map(move |w| (x, y, z, w))))
-        })
-        .map(move |(x, y, z, w)| (x + x0, y + y0, z + z0, w + w0))
+                .flat_map(|x| (-1..=1).flat_map(move |y| (-1..=1).map(move |z| (x, y, z))))
+                .map(move |(x, y, z)| (x + x0, y + y0, z + z0)),
+        )
+    }
+}
+
+impl GridPos for Coord4d {
+    fn init_2d(x: isize, y: isize) -> Self {
+        (x, y, 0, 0)
+    }
+
+    fn surrounding_cube(self) -> Box<dyn Iterator<Item = Self>> {
+        let (x0, y0, z0, w0) = self;
+        Box::new(
+            Coord3d::surrounding_cube((x0, y0, z0))
+                .flat_map(move |(x, y, z)| (-1..=1).map(move |w| (x, y, z, w + w0))),
+        )
+    }
 }
