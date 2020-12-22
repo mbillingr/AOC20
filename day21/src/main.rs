@@ -1,6 +1,6 @@
 use common::input::Input;
 use common::itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 fn main() {
     let input = Input::from_file("data/day21-input.txt");
