@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 fn main() {
     part1();
@@ -15,7 +15,6 @@ fn part1() {
         crab_move(&mut cb);
     }
 
-    find_cup_one(&mut cb);
     let mut cup = 1;
 
     print!("Part 1: ");
@@ -31,23 +30,21 @@ fn part2() {
     for i in 10..=1000000 {
         input_cups.push(i)
     }
+    assert_eq!(input_cups.len(), 1000000);
+    assert_eq!(
+        input_cups.clone().into_iter().collect::<HashSet<_>>().len(),
+        1000000
+    );
     let mut cb = CupBoard::new(input_cups);
 
     for _ in (0..10000000).rev() {
         crab_move(&mut cb);
     }
 
-    find_cup_one(&mut cb);
     let a = cb.get_clockwise(1);
     let b = cb.get_clockwise(a);
 
     println!("Part 2: {}", a as u64 * b as u64);
-}
-
-fn find_cup_one(cb: &mut CupBoard) {
-    while cb.get_current() != 1 {
-        cb.rotate_clockwise()
-    }
 }
 
 fn crab_move(cb: &mut CupBoard) {
@@ -65,16 +62,16 @@ fn pick_three(cb: &mut CupBoard) -> [Cup; 3] {
 }
 
 fn find_destination_label(picked: &[Cup], cb: &mut CupBoard) -> Cup {
-    let mut label = wrapping_dec(cb.get_current());
+    let mut label = wrapping_dec(cb.get_current(), cb.highest_cup());
     while picked.contains(&label) {
-        label = wrapping_dec(label);
+        label = wrapping_dec(label, cb.highest_cup());
     }
     label
 }
 
-fn wrapping_dec(x: Cup) -> Cup {
+fn wrapping_dec(x: Cup, maximum: Cup) -> Cup {
     if x == 1 {
-        9
+        maximum
     } else {
         x - 1
     }
@@ -84,28 +81,35 @@ fn new_current_cup(cb: &mut CupBoard) {
     cb.rotate_clockwise();
 }
 
-type Cup = u32;
+type Cup = usize;
 
 #[derive(Debug)]
 struct CupBoard {
-    cups: HashMap<Cup, Cup>,
+    clockwise_cup: Vec<Cup>,
     current: Cup,
 }
 
 impl CupBoard {
-    fn new(mut input_cups: Vec<Cup>) -> Self {
+    fn new(input_cups: Vec<Cup>) -> Self {
         let first_cup = input_cups[0];
-        input_cups.push(first_cup);
-        let cups = input_cups.windows(2).map(|w| (w[0], w[1])).collect();
+        let mut cups = vec![0; input_cups.len() + 1];
+        cups[*input_cups.last().unwrap()] = first_cup;
+        for w in input_cups.windows(2) {
+            cups[w[0]] = w[1];
+        }
         CupBoard {
-            cups,
+            clockwise_cup: cups,
             current: first_cup,
         }
     }
 
+    fn highest_cup(&self) -> Cup {
+        self.clockwise_cup.len() - 1
+    }
+
     /// point the current cup to the next clockwise cup
     fn rotate_clockwise(&mut self) {
-        self.current = self.cups[&self.current];
+        self.current = self.clockwise_cup[self.current];
     }
 
     /// returns current cup
@@ -115,21 +119,21 @@ impl CupBoard {
 
     /// returns current cup
     fn get_clockwise(&self, label: Cup) -> Cup {
-        self.cups[&label]
+        self.clockwise_cup[label]
     }
 
     fn take_after_current(&mut self) -> Cup {
-        let cup = self.cups[&self.current];
-        let new_after = self.cups[&cup];
-        self.cups.insert(self.current, new_after);
-        self.cups.remove(&cup);
+        let cup = self.clockwise_cup[self.current];
+        let new_after = self.clockwise_cup[cup];
+        self.clockwise_cup[self.current] = new_after;
+        self.clockwise_cup[cup] = 0;
         cup
     }
 
     fn put_after(&mut self, label: Cup, cup: Cup) {
-        let old_after = self.cups[&label];
-        self.cups.insert(cup, old_after);
-        self.cups.insert(label, cup);
+        let old_after = self.clockwise_cup[label];
+        self.clockwise_cup[cup] = old_after;
+        self.clockwise_cup[label] = cup;
     }
 
     fn insert_after(&mut self, label: Cup, picked: &[Cup]) {
