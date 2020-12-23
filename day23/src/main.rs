@@ -1,5 +1,4 @@
-use std::cell::Cell;
-use std::collections::VecDeque;
+use std::collections::HashMap;
 
 fn main() {
     part1();
@@ -17,11 +16,12 @@ fn part1() {
     }
 
     find_cup_one(&mut cb);
-    cb.take_cup();
+    let mut cup = 1;
 
     print!("Part 1: ");
     for _ in 1..=8 {
-        print!("{}", cb.take_cup())
+        cup = cb.get_clockwise(cup);
+        print!("{}", cup)
     }
     println!()
 }
@@ -33,14 +33,15 @@ fn part2() {
     }
     let mut cb = CupBoard::new(input_cups);
 
-    for _ in 0..10000000 {
+    for _ in (0..10000000).rev() {
         crab_move(&mut cb);
     }
 
     find_cup_one(&mut cb);
-    cb.take_cup();
+    let a = cb.get_clockwise(1);
+    let b = cb.get_clockwise(a);
 
-    println!("Part 2: {}", cb.take_cup() * cb.take_cup());
+    println!("Part 2: {}", a as u64 * b as u64);
 }
 
 fn find_cup_one(cb: &mut CupBoard) {
@@ -52,16 +53,14 @@ fn find_cup_one(cb: &mut CupBoard) {
 fn crab_move(cb: &mut CupBoard) {
     let picked = pick_three(cb);
     let destination_label = find_destination_label(&picked, cb);
-    insert_at(destination_label, picked, cb);
+    cb.insert_after(destination_label, &picked);
     new_current_cup(cb);
 }
 
 fn pick_three(cb: &mut CupBoard) -> [Cup; 3] {
-    cb.rotate_clockwise();
-    let a = cb.take_cup();
-    let b = cb.take_cup();
-    let c = cb.take_cup();
-    cb.rotate_counterclockwise();
+    let a = cb.take_after_current();
+    let b = cb.take_after_current();
+    let c = cb.take_after_current();
     [a, b, c]
 }
 
@@ -73,28 +72,11 @@ fn find_destination_label(picked: &[Cup], cb: &mut CupBoard) -> Cup {
     label
 }
 
-fn wrapping_dec(mut x: Cup) -> Cup {
+fn wrapping_dec(x: Cup) -> Cup {
     if x == 1 {
         9
     } else {
         x - 1
-    }
-}
-
-fn insert_at(label: Cup, picked: [Cup; 3], cb: &mut CupBoard) {
-    let mut n_rot = 1;
-    while cb.get_current() != label {
-        n_rot += 1;
-        cb.rotate_clockwise();
-    }
-    cb.rotate_clockwise();
-
-    cb.put_cup(picked[2]);
-    cb.put_cup(picked[1]);
-    cb.put_cup(picked[0]);
-
-    for _ in 0..n_rot {
-        cb.rotate_counterclockwise();
     }
 }
 
@@ -106,42 +88,53 @@ type Cup = u32;
 
 #[derive(Debug)]
 struct CupBoard {
-    /// current cup is defined to be at index 0
-    /// clockwise is index +1
-    cups: VecDeque<Cup>,
+    cups: HashMap<Cup, Cup>,
+    current: Cup,
 }
 
 impl CupBoard {
-    fn new(input_cups: Vec<Cup>) -> Self {
+    fn new(mut input_cups: Vec<Cup>) -> Self {
+        let first_cup = input_cups[0];
+        input_cups.push(first_cup);
+        let cups = input_cups.windows(2).map(|w| (w[0], w[1])).collect();
         CupBoard {
-            cups: input_cups.into(),
+            cups,
+            current: first_cup,
         }
     }
 
     /// point the current cup to the next clockwise cup
     fn rotate_clockwise(&mut self) {
-        let tmp = self.cups.pop_front().unwrap();
-        self.cups.push_back(tmp);
-    }
-
-    /// point the current cup to the next counter clockwise cup
-    fn rotate_counterclockwise(&mut self) {
-        let tmp = self.cups.pop_back().unwrap();
-        self.cups.push_front(tmp);
+        self.current = self.cups[&self.current];
     }
 
     /// returns current cup
     fn get_current(&self) -> Cup {
-        self.cups[0]
+        self.current
     }
 
-    /// removes current cup, making the clockwise cup the new current
-    fn take_cup(&mut self) -> Cup {
-        self.cups.pop_front().unwrap()
+    /// returns current cup
+    fn get_clockwise(&self, label: Cup) -> Cup {
+        self.cups[&label]
     }
 
-    /// removes current cup, making the clockwise cup the new current
-    fn put_cup(&mut self, cup: Cup) {
-        self.cups.push_front(cup)
+    fn take_after_current(&mut self) -> Cup {
+        let cup = self.cups[&self.current];
+        let new_after = self.cups[&cup];
+        self.cups.insert(self.current, new_after);
+        self.cups.remove(&cup);
+        cup
+    }
+
+    fn put_after(&mut self, label: Cup, cup: Cup) {
+        let old_after = self.cups[&label];
+        self.cups.insert(cup, old_after);
+        self.cups.insert(label, cup);
+    }
+
+    fn insert_after(&mut self, label: Cup, picked: &[Cup]) {
+        for &cup in picked.iter().rev() {
+            self.put_after(label, cup)
+        }
     }
 }
